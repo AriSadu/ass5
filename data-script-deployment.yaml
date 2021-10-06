@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   annotations:
@@ -10,6 +10,9 @@ metadata:
   name: data-script
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: data-script
   strategy: {}
   template:
     metadata:
@@ -22,8 +25,44 @@ spec:
         io.kompose.service: data-script
     spec:
       containers:
-      - image: nonodrama/quotes-data-script:v1
+      - image: nonodrama/quotes-data-script:v2
         name: data-script
+        env:
+        - name: MYSQL_DB_HOST
+          valueFrom: 
+              secretKeyRef:
+                name: data-script-secret
+                key: host
+        - name: MYSQL_USER
+          valueFrom: 
+              secretKeyRef:
+                name: data-script-secret
+                key: user
+        - name: MYSQL_USER_PASSWORD
+          valueFrom: 
+              secretKeyRef:
+                name: data-script-secret
+                key: userpassword
+      initContainers:
+      - image: nonodrama/quotes-data-script:v2
+        name: data-script-init
+        command: ['sh', '-c', "until mysql -h ${MYSQL_DB_HOST} -u ${MYSQL_USER} -p${MYSQL_USER_PASSWORD} -e 'show databases;'; do echo waiting for mydb; sleep 2; done"]
+        env:
+        - name: MYSQL_DB_HOST
+          valueFrom: 
+              secretKeyRef:
+                name: data-script-secret
+                key: host
+        - name: MYSQL_USER
+          valueFrom: 
+              secretKeyRef:
+                name: data-script-secret
+                key: user
+        - name: MYSQL_USER_PASSWORD
+          valueFrom: 
+              secretKeyRef:
+                name: data-script-secret
+                key: userpassword
         resources: {}
       restartPolicy: Always
 status: {}

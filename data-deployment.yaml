@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   annotations:
@@ -10,6 +10,9 @@ metadata:
   name: data
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: data
   strategy: {}
   template:
     metadata:
@@ -21,20 +24,40 @@ spec:
         io.kompose.network/myapp: "true"
         io.kompose.service: data
     spec:
+      volumes:
+      - name: datavp
+        persistentVolumeClaim:
+          claimName: dataclaim
       containers:
-      - env:
-        - name: MYSQL_ALLOW_EMPTY_PASSWORD
-          value: "yes"
-        - name: MYSQL_DATABASE
-          value: mydatabase
-        - name: MYSQL_PASSWORD
-          value: root
-        - name: MYSQL_ROOT_PASSWORD
-          value: root
-        image: nonodrama/quotes-data:v1
+      - image: nonodrama/quotes-data:v1
         name: data
+        env:
+        - name: MYSQL_ALLOW_EMPTY_PASSWORD
+          valueFrom: 
+              secretKeyRef:
+                name: data-secret
+                key: allow
+        - name: MYSQL_DATABASE
+          valueFrom: 
+              secretKeyRef:
+                name: data-secret
+                key: database
+        - name: MYSQL_PASSWORD
+          valueFrom: 
+              secretKeyRef:
+                name: data-secret
+                key: password
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom: 
+              secretKeyRef:
+                name: data-secret
+                key: rootpassword
         ports:
         - containerPort: 3306
+        volumeMounts:
+          - mountPath: "/var/lib/mysql"
+            name: datavp
+            subPath: mysql
         resources: {}
       restartPolicy: Always
 status: {}

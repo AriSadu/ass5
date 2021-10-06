@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   annotations:
@@ -10,6 +10,9 @@ metadata:
   name: back
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: back
   strategy: {}
   template:
     metadata:
@@ -22,8 +25,20 @@ spec:
         io.kompose.service: back
     spec:
       containers:
-      - image: nonodrama/quotes-back:v1
-        name: back
+      - image: nonodrama/quotes-back:v2
+        name: api
+        
+        env: 
+          - name: SQLALCHEMY_DATABASE_URI
+            valueFrom: 
+              secretKeyRef:
+                name: back-secret
+                key: password
+          - name: SQLALCHEMY_DATABASE_URI
+            valueFrom:
+              secretKeyRef:
+                name: back-secret 
+                key: username
         ports:
         - containerPort: 3000
         resources: {}
