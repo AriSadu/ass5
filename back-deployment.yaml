@@ -22,12 +22,7 @@ spec:
             valueFrom: 
               secretKeyRef:
                 name: back-secret
-                key: password
-          - name: SQLALCHEMY_DATABASE_URI
-            valueFrom:
-              secretKeyRef:
-                name: back-secret 
-                key: username
+                key: usernameandpassword
         ports:
         - containerPort: 3000
       restartPolicy: Always
